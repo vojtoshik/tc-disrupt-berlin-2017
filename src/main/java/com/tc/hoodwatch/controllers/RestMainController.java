@@ -2,15 +2,23 @@ package com.tc.hoodwatch.controllers;
 
 
 import com.tc.hoodwatch.model.DataPoint;
+import com.tc.hoodwatch.model.GeoCell;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.geogrid.GeoHashGrid;
+import org.elasticsearch.search.aggregations.bucket.geogrid.ParsedGeoHashGrid;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 public class RestMainController {
@@ -43,9 +49,11 @@ public class RestMainController {
     /**
      * Serve Open Street Map data
      *
-     * @param category     category
-     *                     "" = any
+     * @param category     set of categories
+     *                     empty = any
      * @param n            limit
+     * @param lat          latitude
+     * @param lon          longitude
      * @param radiusMeters min radius in meters
      *                     0 = any
      * @return list of found data points
@@ -54,7 +62,7 @@ public class RestMainController {
     @RequestMapping(value = "/osm", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<DataPoint> osm(
             String name,
-            @RequestParam(defaultValue = "0") short category,
+            String category,
             @RequestParam(defaultValue = "0") int n,
             @RequestParam(defaultValue = "0") double lat,
             @RequestParam(defaultValue = "0") double lon,
@@ -64,8 +72,8 @@ public class RestMainController {
 
         BoolQueryBuilder query = new BoolQueryBuilder();
 
-        if (category > 0) {
-            query.must(QueryBuilders.termQuery("category", category));
+        if (StringUtils.isNotEmpty(category)) {
+            query.must(QueryBuilders.termsQuery("category", parseShorts(category)));
         }
         if (radiusMeters > 0) {
             query.must(QueryBuilders.geoDistanceQuery("location")
@@ -103,10 +111,81 @@ public class RestMainController {
                     _name,
                     Double.parseDouble(latlon[0]),
                     Double.parseDouble(latlon[1]),
-                    _category.shortValue(), 
+                    _category.shortValue(),
                     0));
         }
         return result;
+    }
+
+    /**
+     * Serve Open Street Map data
+     *
+     * @param precision precision
+     * @param category  category
+     *                  "" = any
+     * @return cells
+     */
+    @ResponseBody
+    @RequestMapping(value = "/osm_grid", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public List<GeoCell> osmGrid(
+            int precision,
+            String category) throws IOException {
+
+        SearchRequest searchRequest = new SearchRequest("osm").types("osm");
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        sourceBuilder.size(0); // we use only aggregates
+        AggregationBuilder gridAgg = AggregationBuilders.geohashGrid("cells")
+                .field("location")
+                .precision(precision);
+
+        BoolQueryBuilder query = new BoolQueryBuilder();
+
+        if (StringUtils.isNotEmpty(category)) {
+            query.must(QueryBuilders.termsQuery("category", parseShorts(category)));
+            sourceBuilder.query(query);
+        }
+
+//        if (StringUtils.isNotEmpty(category)) {
+//            FilterAggregationBuilder aggregationBuilder = AggregationBuilders.filter("categories", QueryBuilders.termsQuery("category", parseShorts(category)));
+//            gridAgg = aggregationBuilder.subAggregation(gridAgg);
+//        }
+
+        sourceBuilder.aggregation(gridAgg);
+
+        System.out.println("Src:" + sourceBuilder);
+
+        searchRequest.source(sourceBuilder);
+
+        SearchResponse response = highLevelClient.search(searchRequest);
+
+        Aggregations aggregations = response.getAggregations();
+
+        List<GeoCell> cells = new ArrayList<>();
+
+        for (Aggregation aggregation : aggregations) {
+            if (aggregation instanceof ParsedGeoHashGrid) {
+                ParsedGeoHashGrid grid = (ParsedGeoHashGrid) aggregation;
+                for (GeoHashGrid.Bucket bucket : grid.getBuckets()) {
+                    GeoPoint point = ((ParsedGeoHashGrid.ParsedBucket) bucket).getKey();
+                    cells.add(new GeoCell(point.geohash(), point.lat(), point.lon(), (int) bucket.getDocCount()));
+                }
+            }
+        }
+
+        return cells;
+    }
+
+    /**
+     * "1,2,3" -> [1,2,3]
+     */
+    private Set<Short> parseShorts(String str) {
+        String[] parts = str.split(",");
+        Set<Short> res = new HashSet<>();
+        for (String part : parts) {
+            res.add(Short.parseShort(part));
+        }
+        return res;
     }
 
     /**
