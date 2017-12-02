@@ -2,8 +2,12 @@
 <html>
   <head>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" crossorigin="">
-    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet-src.js" crossorigin=""></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.1.0/dist/leaflet.css"
+      integrity="sha512-wcw6ts8Anuw10Mzh9Ytw4pylW8+NAD4ch3lqm9lzAsTxg0GFeJgoAtxuCLREZSC5lUXdVyo/7yfsqFjQ4S+aKw=="
+      crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.1.0/dist/leaflet-src.js"
+      integrity="sha384-TWB9xRHTlLQmqAngHwD7usGcf4akGf0JP6aHwlgilpmOu2UuBq5aWLsDAh39iSn1"
+      crossorigin=""></script>
     <script src="https://releases.route360.net/r360-js/latest.js"></script>
 
 
@@ -20,23 +24,25 @@
   <body>
     <div id="map"></div>
     <script>
-        var map = L.map('map').setView([52.31, 13.24], 10);
+        var greenIcon = L.icon({
+            iconUrl: 'https://cdn4.iconfinder.com/data/icons/checkout-icons/32x32/house.png',
+        });
+        var map = L.map('map').setView([52.53, 13.381], 11);
         L.esri.basemapLayer("Gray").addTo(map);
 
         var addressPoints = [
-                [52.61, 13.84, 100], // lat, lng, intensity
-                [52.33, 13.24, 90],
-                [52.31, 13.35, 90],
-                [52.31, 13.46, 90],
-                [52.31, 13.57, 90],
-                [52.31, 13.68, 90],
-                [52.33, 13.79, 90],
-                [52.61, 13.30, 82.5]];
-        var heat = L.heatLayer(addressPoints,{radius: 25}).addTo(map);
-
+                [52.53, 13.381, 10], // lat, lng, intensity
+                [52.54, 13.382, 9],
+                [52.55, 13.383, 9],
+                [52.56, 13.384, 9],
+                [52.57, 13.385, 9],
+                [52.58, 13.386, 9],
+                [52.59, 13.387, 9],
+                [52.60, 13.388, 8.5]];
+        var heat = L.heatLayer(addressPoints,{radius: 12}).addTo(map);
 
         //изохрона
-        var latlon = [52.63, 13.281];
+        var latlon = [52.53, 13.381];
 
 
          var markerA = L.marker((latlon),{ draggable: true }).addTo(map);
@@ -62,6 +68,37 @@
         };
         showPolygons(true);
         markerA.on('dragend', function(){ showPolygons(true); });
+
+        var noiseStyle = {
+            "color": "#ff7800",
+            "weight": 5,
+            "opacity": 0.65
+        };
+        $.ajax({
+          url: 'osm',
+          data: {
+            category:28,
+            lon: 13,
+            lat: 52,
+            radiusMeters:500000,
+            n: 1000
+          },
+          success: function(data){
+            $.each(data, function() {
+                    var poi = [this.lon,this.lat,this.score];
+                    var rand = Math.random();
+                    if (rand < 0.1){
+                          L.marker([this.lat,this.lon], {icon: greenIcon}).addTo(map);
+                    }
+//                        result.push(poi);
+
+                });
+//            result.push([52.64,13.291]);
+//            L.geoJSON(result, { style: noiseStyle}).addTo(map);
+
+          },
+          dataType: 'json'
+        });
 
     </script>
   </body>
