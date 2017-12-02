@@ -41,6 +41,75 @@ public class RestMainController {
     }
 
     /**
+     * Serve Open Street Map data
+     *
+     * @param category     category
+     *                     "" = any
+     * @param n            limit
+     * @param radiusMeters min radius in meters
+     *                     0 = any
+     * @return list of found data points
+     */
+    @ResponseBody
+    @RequestMapping(value = "/osm", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public List<DataPoint> osm(
+            String name,
+            @RequestParam(defaultValue = "0") short category,
+            @RequestParam(defaultValue = "0") int n,
+            @RequestParam(defaultValue = "0") double lat,
+            @RequestParam(defaultValue = "0") double lon,
+            @RequestParam(defaultValue = "0") double radiusMeters) throws IOException {
+
+        SearchRequest searchRequest = new SearchRequest("osm").types("osm");
+
+        BoolQueryBuilder query = new BoolQueryBuilder();
+
+        if (category > 0) {
+            query.must(QueryBuilders.termQuery("category", category));
+        }
+        if (radiusMeters > 0) {
+            query.must(QueryBuilders.geoDistanceQuery("location")
+                    .distance(radiusMeters, DistanceUnit.METERS)
+                    .point(lat, lon));
+        }
+        if (StringUtils.isNotEmpty(name)) {
+            query.must(QueryBuilders.simpleQueryStringQuery(name).field("name"));
+        }
+
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        if (n > 0) {
+            sourceBuilder.size(n);
+        }
+
+        log.info("Query: " + query);
+
+        sourceBuilder.query(query);
+        searchRequest.source(sourceBuilder);
+        SearchResponse response = highLevelClient.search(searchRequest);
+
+        SearchHits hits = response.getHits();
+
+        List<DataPoint> result = new ArrayList<>(hits.getHits().length);
+
+        for (SearchHit hit : hits) {
+            Map<String, Object> src = hit.getSourceAsMap();
+//            System.out.println(src);
+            String location = (String) src.get("location");
+            Integer _category = (Integer) src.get("category");
+            String _name = (String) src.get("name");
+            String[] latlon = location.split(", ");
+
+            result.add(new DataPoint(
+                    _name,
+                    Double.parseDouble(latlon[0]),
+                    Double.parseDouble(latlon[1]),
+                    _category.shortValue(), 
+                    0));
+        }
+        return result;
+    }
+
+    /**
      * @param category     category
      *                     "" = any
      * @param n            limit
@@ -50,6 +119,7 @@ public class RestMainController {
      *                     0 = any
      * @return list of found data points
      */
+/*
     @ResponseBody
     @RequestMapping(value = "/search", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<DataPoint> search(String category,
@@ -98,11 +168,12 @@ public class RestMainController {
             String[] latlon = location.split(", ");
 
             result.add(new DataPoint(
-                    Double.parseDouble(latlon[0]),
+                    "", Double.parseDouble(latlon[0]),
                     Double.parseDouble(latlon[1]),
                     _category,
                     score));
         }
         return result;
     }
+*/
 }

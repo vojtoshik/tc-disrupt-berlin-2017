@@ -1,17 +1,25 @@
 package com.tc.hoodwatch.model;
 
 public class DataPoint {
+    private String name;
+
     private double lat;
     private double lon;
 
-    private String category;
+    private short category;
     private double score;
 
-    public DataPoint(double lat, double lon, String category, double score) {
+
+    public DataPoint(String name, double lat, double lon, short category, double score) {
+        this.name = name;
         this.lat = lat;
         this.lon = lon;
         this.category = category;
         this.score = score;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public double getLat() {
@@ -22,7 +30,7 @@ public class DataPoint {
         return lon;
     }
 
-    public String getCategory() {
+    public short getCategory() {
         return category;
     }
 
