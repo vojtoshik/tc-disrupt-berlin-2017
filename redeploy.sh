@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd /home/hackathon/tc-disrupt-berlin-2017/
+
 printf "Pulling latest changes from GitHub\n"
 git pull
 
@@ -13,3 +15,4 @@ printf "Starting up..."
 sudo java -jar -Dspring.profiles.active=prod target/hoodwatch-0.0.1-SNAPSHOT.jar &> run.log & 
 printf "[DONE]\n"
 
+cd -
