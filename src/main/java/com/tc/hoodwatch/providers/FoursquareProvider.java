@@ -1,8 +1,11 @@
 package com.tc.hoodwatch.providers;
 
+import com.tc.hoodwatch.model.foursquare.Venue;
+import com.tc.hoodwatch.model.foursquare.VenueCategory;
 import com.tc.hoodwatch.model.foursquare.Yeah;
 import com.tc.hoodwatch.util.JsonUtil;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
@@ -29,11 +32,9 @@ public class FoursquareProvider {
 		}};
 	}
 
-	public static int getNumberOfVenuesInRadius(String coordinates, int radiusMeters, String venueCategory) throws IOException, URISyntaxException {
-		return getNumberOfVenuesInRadiusById(coordinates, radiusMeters, getCategoryId(venueCategory));
-	}
-
-	public static int getNumberOfVenuesInRadiusById(String coordinates, int radiusMeters, String venueId) throws IOException, URISyntaxException {
+	public static int getNumberOfVenuesInRadius(String coordinates, int radiusMeters, VenueCategory venueCategory) throws IOException, URISyntaxException {
+		int count = 0;
+		
 		try(
 				CloseableHttpClient httpclient = HttpClients.createDefault();
 		) {
@@ -42,36 +43,51 @@ public class FoursquareProvider {
 			builder = builder.setParameter("client_id", getProperty("client_id"));
 			builder = builder.setParameter("client_secret", getProperty("client_secret"));
 			builder = builder.setParameter("v", "20171202");
-			builder = builder.setParameter("ll", coordinates);
 			builder = builder.setParameter("intent", "browse");
+			builder = builder.setParameter("limit", "50");
+			builder = builder.setParameter("ll", coordinates);
 			builder = builder.setParameter("radius", String.valueOf(radiusMeters));
-			builder = builder.setParameter("categoryId", venueId);
+			builder = builder.setParameter("categoryId", venueCategory.getId());
 
 
 			HttpGet httpGet = new HttpGet(builder.build());
 			try(
 					CloseableHttpResponse response = httpclient.execute(httpGet);
 			) {
-				System.out.println(response.getStatusLine());
-				HttpEntity entity = response.getEntity();
-				try {
-					String json = EntityUtils.toString(entity);
-					System.out.println(json);
-					Yeah yeah = JsonUtil.parseJson(json, Yeah.class);
-					System.out.println(yeah.toPrettyJson());
+				if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+					HttpEntity entity = response.getEntity();
+					try {
+						String json = EntityUtils.toString(entity);
+						System.out.println(json);
+						Yeah yeah = JsonUtil.parseJson(json, Yeah.class);
+						System.out.println(yeah.toPrettyJson());
+
+						if(yeah.response != null) {
+							for(Venue venue: yeah.response.venues) {
+								if(venue.location != null && venue.location.distance != null) {
+									if(venue.location.distance < radiusMeters) {
+										count++;
+									}
+								}
+							}
+						}
+					}
+					finally {
+						// and ensure it is fully consumed
+						EntityUtils.consume(entity);
+					}
 				}
-				finally {
-					// and ensure it is fully consumed
-					EntityUtils.consume(entity);
+				else {
+					System.out.println(response.getStatusLine());
 				}
 			}
 		}
 
-		return 0;
+		return count;
 	}
 
 	public static void main(String[] args) throws IOException, URISyntaxException {
-		getNumberOfVenuesInRadius("52.516667,13.388889", 10000, "waste_facility");
+		System.out.printf("count: %d\n", getNumberOfVenuesInRadius("52.516667,13.388889", 1000, VenueCategory.FOOD));
 	}
 
 	public static String getCategoryId(String key) {
