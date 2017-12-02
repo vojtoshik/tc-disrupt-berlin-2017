@@ -40,13 +40,20 @@
 
 
          var markerA = L.marker((latlon),{ draggable: true }).addTo(map);
-         var polygonLayer = r360.leafletPolygonLayer().addTo(map);
+         var polygonLayer = r360.leafletPolygonLayer({ inverse: true }).addTo(map);
+         polygonLayer.setColors([{
+              'time': 600,
+              'opacity' : 0.5
+            }, {
+              'time': 1200,
+               'opacity' : 0.2
+            }, ]);
          var showPolygons = function(rezoom) {
              var travelOptions = r360.travelOptions();
                 travelOptions.setServiceKey('3WQ8V9LAR8PIAE6T5LRZMBT');
                 travelOptions.addSource(markerA);
-                travelOptions.setTravelTimes([600, 1200, 1800]);
-                travelOptions.setTravelType('car');
+                travelOptions.setTravelTimes([600, 1200]);
+                travelOptions.setTravelType('transit');
                 travelOptions.setServiceUrl('https://service.route360.net/germany/');
 
             r360.PolygonService.getTravelTimePolygons(travelOptions, function(polygons){
