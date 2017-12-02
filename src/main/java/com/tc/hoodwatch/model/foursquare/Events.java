@@ -6,13 +6,11 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 
 @XmlRootElement
-public class Icon extends AbstractJson {
+public class Events extends AbstractJson {
 	@XmlElement
-	public String prefix;
+	public Integer count;
 	@XmlElement
-	public String suffix;
+	public String summary;
 	@XmlElement
-	public String name;
-	@XmlElement
-	public List<Integer> sizes;
+	public List<Event> items;
 }

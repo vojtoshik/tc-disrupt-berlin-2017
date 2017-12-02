@@ -24,11 +24,21 @@ public class Venue extends AbstractJson {
 	@XmlElement
 	public String url;
 	@XmlElement
+	public Menu menu;
+	@XmlElement
+	public Boolean venueRatingBlacklisted;
+	@XmlElement
 	public Boolean allowMenuUrlEdit;
 	@XmlElement
 	public BeenHere beenHere;
 	@XmlElement
 	public Specials specials;
+	@XmlElement
+	public Events events;
+	@XmlElement
+	public VenuePage venuePage;
+	@XmlElement
+	public String storeId;
 	@XmlElement
 	public String referralId;
 	@XmlElement

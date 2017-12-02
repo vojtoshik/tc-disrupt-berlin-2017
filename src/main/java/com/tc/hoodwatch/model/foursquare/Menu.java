@@ -3,16 +3,19 @@ package com.tc.hoodwatch.model.foursquare;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.List;
 
 @XmlRootElement
-public class Icon extends AbstractJson {
+public class Menu extends AbstractJson {
 	@XmlElement
-	public String prefix;
+	public String type;
 	@XmlElement
-	public String suffix;
+	public String label;
 	@XmlElement
-	public String name;
+	public String anchor;
 	@XmlElement
-	public List<Integer> sizes;
+	public String url;
+	@XmlElement
+	public String mobileUrl;
+	@XmlElement
+	public String externalUrl;
 }

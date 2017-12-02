@@ -42,10 +42,10 @@ public class FoursquareProvider {
 			builder = builder.setParameter("client_id", getProperty("client_id"));
 			builder = builder.setParameter("client_secret", getProperty("client_secret"));
 			builder = builder.setParameter("v", "20171202");
-			builder = builder.setParameter("ll", "50.45,30.523333");
+			builder = builder.setParameter("ll", coordinates);
 			builder = builder.setParameter("intent", "browse");
-			builder = builder.setParameter("radius", "1000");
-			builder = builder.setParameter("categoryId", "4e0e22f5a56208c4ea9a85a0");
+			builder = builder.setParameter("radius", String.valueOf(radiusMeters));
+			builder = builder.setParameter("categoryId", venueId);
 
 
 			HttpGet httpGet = new HttpGet(builder.build());
@@ -56,6 +56,7 @@ public class FoursquareProvider {
 				HttpEntity entity = response.getEntity();
 				try {
 					String json = EntityUtils.toString(entity);
+					System.out.println(json);
 					Yeah yeah = JsonUtil.parseJson(json, Yeah.class);
 					System.out.println(yeah.toPrettyJson());
 				}
@@ -70,8 +71,7 @@ public class FoursquareProvider {
 	}
 
 	public static void main(String[] args) throws IOException, URISyntaxException {
-		getNumberOfVenuesInRadiusById("", 0, "");
-
+		getNumberOfVenuesInRadius("52.516667,13.388889", 10000, "waste_facility");
 	}
 
 	public static String getCategoryId(String key) {
