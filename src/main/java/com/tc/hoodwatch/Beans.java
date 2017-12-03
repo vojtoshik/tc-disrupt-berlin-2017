@@ -9,12 +9,12 @@ import org.springframework.context.annotation.Configuration;
 @SuppressWarnings("ALL")
 @Configuration
 public class Beans {
-    public static final String ES_HOST = "hack.cmlteam.com";
+    public static final HttpHost ES_HOST = HttpHost.create("https://hack.cmlteam.com");
     private final RestClient restClient;
     private final RestHighLevelClient highLevelClient;
 
     public Beans() {
-        restClient = RestClient.builder(new HttpHost(ES_HOST, 80)).build();
+        restClient = RestClient.builder(ES_HOST).build();
 
         highLevelClient = new RestHighLevelClient(restClient);
     }
