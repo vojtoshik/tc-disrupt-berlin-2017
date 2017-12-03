@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @SuppressWarnings("ALL")
 @Configuration
 public class Beans {
-    public static final String ES_HOST = "es.mydev.name";
+    public static final String ES_HOST = "hack.cmlteam.com";
     private final RestClient restClient;
     private final RestHighLevelClient highLevelClient;
 
