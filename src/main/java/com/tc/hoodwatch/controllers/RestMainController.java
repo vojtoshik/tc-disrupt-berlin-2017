@@ -2,6 +2,7 @@ package com.tc.hoodwatch.controllers;
 
 
 import com.tc.hoodwatch.model.DataPoint;
+import com.tc.hoodwatch.model.DataPoint1;
 import com.tc.hoodwatch.model.GeoCell;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.search.SearchRequest;
@@ -45,6 +46,49 @@ public class RestMainController {
     public String endpoint() {
         return "Yo";
     }
+
+    @ResponseBody
+    @RequestMapping(value = "/berlin", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public List<DataPoint1> getBerlin(
+            @RequestParam(defaultValue = "10245") int postCode,
+            @RequestParam(defaultValue = "3000") int n
+    ) throws IOException {
+        SearchRequest searchRequest = new SearchRequest("berlin");
+
+        BoolQueryBuilder query = new BoolQueryBuilder();
+
+        query.must(QueryBuilders.termQuery("postCode", postCode));
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        sourceBuilder.size(n);
+
+        log.info("Query: " + query);
+
+        sourceBuilder.query(query);
+        searchRequest.source(sourceBuilder);
+        SearchResponse response = highLevelClient.search(searchRequest);
+
+        SearchHits hits = response.getHits();
+
+        List<DataPoint1> result = new ArrayList<>(hits.getHits().length);
+
+        for (SearchHit hit : hits) {
+            Map<String, Object> src = hit.getSourceAsMap();
+//            System.out.println(src);
+            Map<String,String> location = (Map) src.get("location");
+            Map<String,Integer> values = (Map)src.get("values");
+
+            result.add(new DataPoint1(
+                    Double.parseDouble(location.get("lat")),
+                    Double.parseDouble(location.get("lon")),
+                    values.get("shops"),
+                    values.get("transport"),
+                    values.get("food"),
+                    values.get("sport")
+            ));
+        }
+        return result;
+    }
+
 
     /**
      * Serve Open Street Map data

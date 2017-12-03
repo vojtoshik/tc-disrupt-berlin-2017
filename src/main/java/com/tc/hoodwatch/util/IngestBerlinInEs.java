@@ -12,14 +12,15 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 public class IngestBerlinInEs {
-    public static final String ES_HOST = "es.mydev.name";
+//    public static final String ES_HOST = "es.mydev.name";
+    public static final String ES_HOST = "hack.cmlteam.com";
     public static final String FILE = "tmp/berlin_germany.csv";
     public static final String INDEX = "osm";
     public static final int BATCH = 1000;
 
     public static void main(String[] args) throws IOException {
 
-        RestClient restClient = RestClient.builder(new HttpHost(ES_HOST, 80)).build();
+        RestClient restClient = RestClient.builder(HttpHost.create("https://hack.cmlteam.com")).build();
 
         RestHighLevelClient highLevelClient = new RestHighLevelClient(restClient);
 

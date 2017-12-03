@@ -22,6 +22,12 @@
     </style>
   </head>
   <body>
+    <div style="background-color: #fff; z-index: 1000; position: fixed; top: 10px; right: 10px;
+font-family: sans-serif">
+      <label><input name="param" id="param1" type="checkbox">Param 1</label>
+      <label><input name="param" id="param2" type="checkbox">Param 2</label>
+      <label><input name="param" id="param3" type="checkbox">Param 3</label>
+    </div>
     <div id="map"></div>
     <script>
 		var greenIcon = L.icon({
@@ -31,17 +37,6 @@
 
 		var map = L.map('map', {layers: [cities]}).setView([52.53, 13.381], 13);
 		L.esri.basemapLayer("Gray").addTo(map);
-
-		var overlays = {
-			"Parameter 1": cities,
-			"Parameter 2": cities,
-			"Parameter 3": cities,
-			"Parameter 4": cities,
-			"Parameter 5": cities,
-			"Parameter 6": cities,
-			"Parameter 7": cities,
-		};
-		L.control.layers({}, overlays).addTo(map);
 
         var addressPoints = [
                 [52.53, 13.381, 10], // lat, lng, intensity
@@ -56,7 +51,6 @@
 
         //изохрона
         var latlon = [52.53, 13.381];
-
 
          var markerA = L.marker((latlon),{ draggable: true }).addTo(map);
          var polygonLayer = r360.leafletPolygonLayer({ inverse: true }).addTo(map);
@@ -87,6 +81,7 @@
             "weight": 5,
             "opacity": 0.65
         };
+
         $.ajax({
           url: 'osm',
           data: {
@@ -97,15 +92,29 @@
             n: 1000
           },
           success: function(data){
+            var result = [];
             $.each(data, function() {
                     var poi = [this.lon,this.lat,this.score];
                     var rand = Math.random();
                     if (rand < 0.1){
-                          L.marker([this.lat,this.lon], {icon: greenIcon}).addTo(map);
+                          var marker = L.marker([this.lat,this.lon], {icon: greenIcon});
+                          result.push(marker);
+
                     }
 //                        result.push(poi);
 
                 });
+            cities=L.layerGroup(result).addTo(map);
+            var overlays = {
+			"Parameter 1": cities,
+			"Parameter 2": cities,
+			"Parameter 3": cities,
+			"Parameter 4": cities,
+			"Parameter 5": cities,
+			"Parameter 6": cities,
+			"Parameter 7": cities,
+		};
+		L.control.layers({}, overlays).addTo(map);
 //            result.push([52.64,13.291]);
 //            L.geoJSON(result, { style: noiseStyle}).addTo(map);
 
