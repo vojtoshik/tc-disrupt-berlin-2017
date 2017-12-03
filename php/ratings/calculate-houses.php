@@ -5,7 +5,7 @@ include "vendor/autoload.php";
 $client = new GuzzleHttp\Client();
 
 $housesCurrentPage = 0;
-$batchSize = 2;
+$batchSize = 100;
 $totalRecords = 375340;
 
 $parkingsSearchScript = json_decode(file_get_contents('requests/search-parkings.json'));
