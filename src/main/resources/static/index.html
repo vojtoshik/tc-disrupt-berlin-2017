@@ -29,7 +29,7 @@
 		});
 		var cities = L.layerGroup();
 
-		var map = L.map('map', {layers: [cities]}).setView([52.53, 13.381], 11);
+		var map = L.map('map', {layers: [cities]}).setView([52.53, 13.381], 13);
 		L.esri.basemapLayer("Gray").addTo(map);
 
 		var overlays = {
@@ -80,7 +80,7 @@
             });
         };
         showPolygons(true);
-        markerA.on('dragend', function(){ showPolygons(true); });
+        markerA.on('dragend', function(){ showPolygons(false); });
 
         var noiseStyle = {
             "color": "#ff7800",
@@ -117,7 +117,7 @@
           url: 'osm_grid',
           data: {
             category:'26,27,28',
-            precision: 6,
+            precision: 9,
           },
           success: function(data){
             var resultHeat = [];
@@ -131,11 +131,11 @@
                     }
                 });
             $.each(resultHeat, function() {
-              this[2]/=max;
+              this[2]/=max*2;
             });
 
 
-            var heat = L.heatLayer(resultHeat,{radius: 50,blur:1,gradient : {0.1: 'blue', 0.25: 'blue', 0.5: 'blue'},minOpacity:0.1}).addTo(map);
+            var heat = L.heatLayer(resultHeat,{radius: 50,gradient : {0.1: 'blue', 0.25: 'blue', 0.5: 'blue'},minOpacity:0.1}).addTo(map);
             console.log(resultHeat.length);
             console.log(max);
 
