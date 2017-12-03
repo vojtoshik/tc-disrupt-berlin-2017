@@ -30,11 +30,7 @@ foreach ($houses as $item) {
     $location = $item->_source->location;
     $id = $item->_source->id;
 
-    $pointsSearchScript = json_decode(file_get_contents('requests/search-supermarkets-nearby.json'));
-    $pointsSearchScript->query->bool->filter[0]->geo_distance->location = $location;
-
-    $supermarketsNearby = json_decode($client->request('GET', 'https://hack.cmlteam.com/osm/_search', ['json' => $pointsSearchScript])->getBody());
-    $shopsScore = $supermarketsNearby->hits->total;
+    $shopsScore = getValueForCategory(105, $location);
 
     $parkingsSearchScript = json_decode(file_get_contents('requests/search-parkings.json'));
     $parkingsSearchScript->query->bool->filter->geo_distance->location = $location;
@@ -44,7 +40,7 @@ foreach ($houses as $item) {
 
     $sportScore = getValue($location, 110, 136);
     $transport = getValue($location, 159, 168);
-    $food = getValue($location, 23, 29);
+    $food = getValueForCategory(25, $location);
 
     $updateScript = file_get_contents('requests/update-house.json');
     $updateScript = str_replace('$SHOPS$', $shopsScore, $updateScript);
@@ -54,6 +50,10 @@ foreach ($houses as $item) {
     $updateScript = str_replace('$PARKING$', $parkingsScore, $updateScript);
 
     $client->request('POST', 'https://hack.cmlteam.com/berlin/houses/' . $id . '/_update', ['json' => json_decode($updateScript)]);
+
+    $counter++;
+
+    printf("Updated id:%d (#%d)\n", $id, $counter);
 }
 
 function getValue($location, $gte, $lte) {
@@ -68,4 +68,15 @@ function getValue($location, $gte, $lte) {
 
     $itemsNearby = json_decode($client->request('GET', 'https://hack.cmlteam.com/osm/_search', ['json' => $pointsSearchScript])->getBody());
     return $itemsNearby->hits->total;
+}
+
+function getValueForCategory($category, $location) {
+    $client = new GuzzleHttp\Client();
+
+    $pointsSearchScript = file_get_contents('requests/search-category.json');
+    $pointsSearchScript = json_decode(str_replace('$CATEGORY$', $category, $pointsSearchScript));
+    $pointsSearchScript->query->bool->filter[0]->geo_distance->location = $location;
+
+    $supermarketsNearby = json_decode($client->request('GET', 'https://hack.cmlteam.com/osm/_search', ['json' => $pointsSearchScript])->getBody());
+    return $supermarketsNearby->hits->total;
 }
