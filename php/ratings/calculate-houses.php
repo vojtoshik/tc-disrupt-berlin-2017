@@ -4,56 +4,61 @@ include "vendor/autoload.php";
 
 $client = new GuzzleHttp\Client();
 
-$searchRequest = [
-    'from' => 0,
-    'size' => 3000,
-    'query' => [
-        'term' => [
-            'postCode' => 10245
-        ]
-    ]
-];
+$housesCurrentPage = 0;
+$batchSize = 100;
+$totalRecords = 375340;
 
 
-$res = $client->request('GET', 'https://hack.cmlteam.com/berlin/_search', [
-    'json' => $searchRequest
-]);
-$hits = json_decode($res->getBody())->hits;
+while ($housesCurrentPage * $batchSize < $totalRecords) {
 
-echo "Total houses: " . $hits->total . "\n";
+    $searchRequest = [
+        'from' => $housesCurrentPage * $batchSize,
+        'size' => $batchSize
+    ];
 
-$houses = $hits->hits;
-$counter = 0;
 
-foreach ($houses as $item) {
+    $res = $client->request('GET', 'https://hack.cmlteam.com/berlin/_search', [
+        'json' => $searchRequest
+    ]);
+    $hits = json_decode($res->getBody())->hits;
 
-    $location = $item->_source->location;
-    $id = $item->_source->id;
+    echo "Batch number: " . ($housesCurrentPage + 1) . "\n";
 
-    $shopsScore = getValueForCategory(105, $location);
+    $houses = $hits->hits;
+    $counter = 0;
 
-    $parkingsSearchScript = json_decode(file_get_contents('requests/search-parkings.json'));
-    $parkingsSearchScript->query->bool->filter->geo_distance->location = $location;
+    foreach ($houses as $item) {
 
-    $parkingsNearby = json_decode($client->request('GET', 'https://hack.cmlteam.com/parkings/_search', ['json' => $parkingsSearchScript])->getBody());
-    $parkingsScore = $parkingsNearby->hits->total;
+        $location = $item->_source->location;
+        $id = $item->_source->id;
 
-    $sportScore = getValue($location, 110, 136);
-    $transport = getValue($location, 159, 168);
-    $food = getValueForCategory(25, $location);
+        $shopsScore = getValueForCategory(105, $location);
 
-    $updateScript = file_get_contents('requests/update-house.json');
-    $updateScript = str_replace('$SHOPS$', $shopsScore, $updateScript);
-    $updateScript = str_replace('$SPORT$', $sportScore, $updateScript);
-    $updateScript = str_replace('$TRANS$', $transport, $updateScript);
-    $updateScript = str_replace('$FOOD$', $food, $updateScript);
-    $updateScript = str_replace('$PARKING$', $parkingsScore, $updateScript);
+        $parkingsSearchScript = json_decode(file_get_contents('requests/search-parkings.json'));
+        $parkingsSearchScript->query->bool->filter->geo_distance->location = $location;
 
-    $client->request('POST', 'https://hack.cmlteam.com/berlin/houses/' . $id . '/_update', ['json' => json_decode($updateScript)]);
+        $parkingsNearby = json_decode($client->request('GET', 'https://hack.cmlteam.com/parkings/_search', ['json' => $parkingsSearchScript])->getBody());
+        $parkingsScore = $parkingsNearby->hits->total;
 
-    $counter++;
+        $sportScore = getValue($location, 110, 136);
+        $transport = getValue($location, 159, 168);
+        $food = getValueForCategory(25, $location);
 
-    printf("Updated id:%d (#%d)\n", $id, $counter);
+        $updateScript = file_get_contents('requests/update-house.json');
+        $updateScript = str_replace('$SHOPS$', $shopsScore, $updateScript);
+        $updateScript = str_replace('$SPORT$', $sportScore, $updateScript);
+        $updateScript = str_replace('$TRANS$', $transport, $updateScript);
+        $updateScript = str_replace('$FOOD$', $food, $updateScript);
+        $updateScript = str_replace('$PARKING$', $parkingsScore, $updateScript);
+
+        $client->request('POST', 'https://hack.cmlteam.com/berlin/houses/' . $id . '/_update', ['json' => json_decode($updateScript)]);
+
+        $counter++;
+
+        printf("Updated id:%d (#%d)\n", $id, $counter);
+    }
+
+    $housesCurrentPage++;
 }
 
 function getValue($location, $gte, $lte) {
