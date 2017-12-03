@@ -27,19 +27,20 @@ $counter = 0;
 
 foreach ($houses as $item) {
 
-//    if ($counter++ % 10 != 0) {
-//        continue;
-//    }
-
     $location = $item->_source->location;
     $id = $item->_source->id;
 
     $pointsSearchScript = json_decode(file_get_contents('requests/search-supermarkets-nearby.json'));
     $pointsSearchScript->query->bool->filter[0]->geo_distance->location = $location;
 
-    $shopsScore = 0;
     $supermarketsNearby = json_decode($client->request('GET', 'https://hack.cmlteam.com/osm/_search', ['json' => $pointsSearchScript])->getBody());
     $shopsScore = $supermarketsNearby->hits->total;
+
+    $parkingsSearchScript = json_decode(file_get_contents('requests/search-parkings.json'));
+    $parkingsSearchScript->query->bool->filter->geo_distance->location = $location;
+
+    $parkingsNearby = json_decode($client->request('GET', 'https://hack.cmlteam.com/parkings/_search', ['json' => $parkingsSearchScript])->getBody());
+    $parkingsScore = $parkingsNearby->hits->total;
 
     $sportScore = getValue($location, 110, 136);
     $transport = getValue($location, 159, 168);
@@ -50,10 +51,7 @@ foreach ($houses as $item) {
     $updateScript = str_replace('$SPORT$', $sportScore, $updateScript);
     $updateScript = str_replace('$TRANS$', $transport, $updateScript);
     $updateScript = str_replace('$FOOD$', $food, $updateScript);
-
-    echo 'https://hack.cmlteam.com/berlin/houses/' . $id . '/_update' . "\n";
-//    echo $updateScript . "\n\n";
-
+    $updateScript = str_replace('$PARKING$', $parkingsScore, $updateScript);
 
     $client->request('POST', 'https://hack.cmlteam.com/berlin/houses/' . $id . '/_update', ['json' => json_decode($updateScript)]);
 }
