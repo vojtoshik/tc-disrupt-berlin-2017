@@ -8,12 +8,21 @@ $housesCurrentPage = 0;
 $batchSize = 2;
 $totalRecords = 375340;
 
+$parkingsSearchScript = json_decode(file_get_contents('requests/search-parkings.json'));
+$searchCatRange = file_get_contents('requests/search-category-range.json');
+$searchCat = file_get_contents('requests/search-category.json');
+$updateScript = file_get_contents('requests/update-house.json');
 
 while ($housesCurrentPage * $batchSize < $totalRecords) {
 
     $searchRequest = [
         'from' => $housesCurrentPage * $batchSize,
-        'size' => $batchSize
+        'size' => $batchSize,
+          'sort' => [
+        ["_uid" => [
+            "order" => "asc"
+        ]]
+    ]
     ];
 
 
@@ -34,7 +43,6 @@ while ($housesCurrentPage * $batchSize < $totalRecords) {
 
         $shopsScore = getValueForCategory(105, $location);
 
-        $parkingsSearchScript = json_decode(file_get_contents('requests/search-parkings.json'));
         $parkingsSearchScript->query->bool->filter->geo_distance->location = $location;
 
         $parkingsNearby = json_decode($client->request('GET', 'https://hack.cmlteam.com/parkings/_search', ['json' => $parkingsSearchScript])->getBody());
@@ -44,7 +52,6 @@ while ($housesCurrentPage * $batchSize < $totalRecords) {
         $transport = getValue($location, 159, 168);
         $food = getValueForCategory(25, $location);
 
-        $updateScript = file_get_contents('requests/update-house.json');
         $updateScript = str_replace('$SHOPS$', $shopsScore, $updateScript);
         $updateScript = str_replace('$SPORT$', $sportScore, $updateScript);
         $updateScript = str_replace('$TRANS$', $transport, $updateScript);
@@ -65,23 +72,23 @@ function getValue($location, $gte, $lte) {
 
     $client = new GuzzleHttp\Client();
 
-    $pointsSearchScript = file_get_contents('requests/search-category-range.json');
-    $pointsSearchScript = str_replace('$LTE$', $lte, $pointsSearchScript);
-    $pointsSearchScript = str_replace('$GTE$', $gte, $pointsSearchScript);
-    $pointsSearchScript = json_decode($pointsSearchScript);
-    $pointsSearchScript->query->bool->filter[0]->geo_distance->location = $location;
+    global $searchCatRange;
+    $scr = str_replace('$LTE$', $lte, $searchCatRange);
+    $scr = str_replace('$GTE$', $gte, $scr);
+    $scr = json_decode($scr);
+    $scr->query->bool->filter[0]->geo_distance->location = $location;
 
-    $itemsNearby = json_decode($client->request('GET', 'https://hack.cmlteam.com/osm/_search', ['json' => $pointsSearchScript])->getBody());
+    $itemsNearby = json_decode($client->request('GET', 'https://hack.cmlteam.com/osm/_search', ['json' => $scr])->getBody());
     return $itemsNearby->hits->total;
 }
 
 function getValueForCategory($category, $location) {
     $client = new GuzzleHttp\Client();
 
-    $pointsSearchScript = file_get_contents('requests/search-category.json');
-    $pointsSearchScript = json_decode(str_replace('$CATEGORY$', $category, $pointsSearchScript));
-    $pointsSearchScript->query->bool->filter[0]->geo_distance->location = $location;
+    global $searchCat;
+    $scr = json_decode(str_replace('$CATEGORY$', $category, $searchCat));
+    $scr->query->bool->filter[0]->geo_distance->location = $location;
 
-    $supermarketsNearby = json_decode($client->request('GET', 'https://hack.cmlteam.com/osm/_search', ['json' => $pointsSearchScript])->getBody());
+    $supermarketsNearby = json_decode($client->request('GET', 'https://hack.cmlteam.com/osm/_search', ['json' => $scr])->getBody());
     return $supermarketsNearby->hits->total;
 }
