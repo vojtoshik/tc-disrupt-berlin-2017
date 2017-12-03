@@ -149,13 +149,13 @@
 						var value = 0;
 						for (var key in this) {
 							if(this.hasOwnProperty(key) && categories.indexOf(key) !== -1) {
-								value += this[key]/maxs[key]/Object.keys(maxs).length;
+								value += maxs[key]/(this[key]+1);
 							}
 						}
 						heat.push([
 							this.lat,
 							this.lon,
-							value
+							Object.keys(maxs).length/value
 						]);
 					});
 					changeHeatmap(heat);
@@ -245,7 +245,7 @@
 			heat,
 			{
 				radius: 10,
-				gradient: {0.4: 'blue', 0.65: 'lime', 1: 'red'},
+				gradient: {0.4: 'blue', 0.65: 'lime', 1.0: 'red'},
 				minOpacity: 0.05,
 				maxOpacity: 0.35,
 				blur:40
