@@ -1,169 +1,21 @@
-<!DOCTYPE html>
 <html>
-  <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.1.0/dist/leaflet.css"
-      integrity="sha512-wcw6ts8Anuw10Mzh9Ytw4pylW8+NAD4ch3lqm9lzAsTxg0GFeJgoAtxuCLREZSC5lUXdVyo/7yfsqFjQ4S+aKw=="
-      crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.1.0/dist/leaflet-src.js"
-      integrity="sha384-TWB9xRHTlLQmqAngHwD7usGcf4akGf0JP6aHwlgilpmOu2UuBq5aWLsDAh39iSn1"
-      crossorigin=""></script>
-    <script src="https://releases.route360.net/r360-js/latest.js"></script>
+	<head>
+		<title>Qife</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="main.css" />
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+	</head>
 
-
-    <!-- Load Esri Leaflet locally, after cloning this repository -->
-    <script src="https://unpkg.com/esri-leaflet@2.1.1"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
-
-    <link rel="stylesheet" href="http://gregallensworth.github.io/L.Control.Credits/dist/leaflet-control-credits.css"/>
-    <script src="http://gregallensworth.github.io/L.Control.Credits/dist/leaflet-control-credits.js"></script>
-    <style>
-      html, body, #map {
-        margin:0; padding:0;  width : 100%; height : 100%;
-      }
-    </style>
-  </head>
-  <body>
-    <div style="background-color: #fff; z-index: 1000; position: fixed; top: 10px; right: 10px;
-#font-family: sans-serif">
-      <label><input name="param" id="param1" type="checkbox">Param 1</label>
-      <label><input name="param" id="param2" type="checkbox">Param 2</label>
-      <label><input name="param" id="param3" type="checkbox">Param 3</label>
-    </div>
-    <div id="map"></div>
-    <div id="logo" style="position: absolute; bottom: 0; left: 0;z-index: 1000">
-        <img src="Where_Berlin_Map_Logo.png">
-    </div>
-    <script>
-		var greenIcon = L.icon({
-			iconUrl: 'https://cdn4.iconfinder.com/data/icons/checkout-icons/32x32/house.png',
-		});
-		var cities = L.layerGroup();
-
-		var map = L.map('map', {autoZIndex:false,sortLayers:true}).setView([52.53, 13.381], 13);
-		L.esri.basemapLayer("Gray").addTo(map);
-
-        //изохрона
-         var markerA = L.marker([52.53, 13.381],{ draggable: true }).addTo(map);
-         var polygonLayer = r360.leafletPolygonLayer({ inverse: true }).addTo(map);
-         polygonLayer.setColors([{
-              'time': 600,
-              'opacity' : 0.9
-            },
-//            {
-//              'time': 1200,
-//               'opacity' : 0.7
-//            },
-            ]);
-         var showPolygons = function(rezoom) {
-             var travelOptions = r360.travelOptions();
-                travelOptions.setServiceKey('3WQ8V9LAR8PIAE6T5LRZMBT');
-                travelOptions.addSource(markerA);
-                travelOptions.setTravelTimes([600]);
-                travelOptions.setTravelType('transit');
-                travelOptions.setServiceUrl('https://service.route360.net/germany/');
-
-            r360.PolygonService.getTravelTimePolygons(travelOptions, function(polygons){
-                polygonLayer.clearAndAddLayers(polygons, rezoom || false);
-            });
-        };
-        showPolygons(true);
-        markerA.on('dragend', function(){ showPolygons(false); });
-
-        var noiseStyle = {
-            "color": "#ff7800",
-            "weight": 5,
-            "opacity": 0.65
-        };
-
-        $.ajax({
-          url: 'osm',
-          data: {
-            category:28,
-            lon: 13,
-            lat: 52,
-            radiusMeters:500000,
-            n: 1000
-          },
-          success: function(data){
-            var result = [];
-            $.each(data, function() {
-                    var poi = [this.lon,this.lat,this.score];
-                    var rand = Math.random();
-                    if (rand < 0.1){
-                          var marker = L.marker([this.lat,this.lon], {icon: greenIcon});
-                          result.push(marker);
-
-                    }
-                });
-                cities=L.layerGroup(result).addTo(map);
-                    var overlays = {
-                    "Parameter 1": cities,
-                    "Parameter 2": cities,
-                    "Parameter 3": cities,
-                    "Parameter 4": cities,
-                    "Parameter 5": cities,
-                    "Parameter 6": cities,
-                    "Parameter 7": cities,
-                };
-                L.control.layers({}, overlays).addTo(map);
-          },
-          dataType: 'json'
-        });
-
-        $.ajax({
-          url: 'berlin',
-          data: {
-//            category:'26,27,28',
-//            precision: 9,
-          },
-          success: function(data){
-            var resultHeat = [];
-            var result = [];
-            var max = 0;
-            $.each(data, function() {
-                    var poi = [this.lat,this.lon,(this.transport>200)?200:this.transport];
-                    resultHeat.push(poi);
-                    if (this.shops > max){
-                      max=this.shops;
-                    }
-                });
-            $.each(resultHeat, function() {
-              this[2]/=200;
-            });
-            var heat = L.heatLayer(resultHeat,{radius: 10,gradient : {0.1: 'blue', 0.25: 'blue', 0.5: 'blue'},minOpacity:0.1}).addTo(map);
-//            polygonLayer.bringToFront();
-          },
-          dataType: 'json'
-        });
-
-        $.ajax({
-          url: 'berlin',
-          data: {
-//            category:'26,27,28',
-//            precision: 9,
-          },
-          success: function(data){
-            var resultHeat = [];
-            var result = [];
-            var max = 0;
-            $.each(data, function() {
-                    var poi = [this.lat,this.lon,(this.transport>200)?200:this.transport];
-                    resultHeat.push(poi);
-                    if (this.shops > max){
-                      max=this.shops;
-                    }
-                });
-            $.each(resultHeat, function() {
-              this[2]/=200;
-            });
-            var heat = L.heatLayer(resultHeat,{radius: 10,gradient : {0.1: 'blue', 0.25: 'blue', 0.5: 'blue'},minOpacity:0.1}).addTo(map);
-//            polygonLayer.bringToFront();
-          },
-          dataType: 'json'
-        });
-
-
-    </script>
-  </body>
-</html>
+<a href="./index2.html"> <img src="Where_Berlin_Logo.png"></a>
+<br>
+<br>
+<button class="press press-white press-round press-ghost press-xl">Find your sweet spot</button>
+<br>
+<br>
+<br>
+<h2>Powered by:</h2><br>
+<img src="esri_ini_page.png"/>
+<img src="daimler_ini_page.png"/>
+</html> 	
