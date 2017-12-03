@@ -44,14 +44,17 @@ public class RestMainController {
     @ResponseBody
     @RequestMapping(value = "/berlin", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<DataPoint1> getBerlin(
-            @RequestParam(defaultValue = "10245") int postCode,
-            @RequestParam(defaultValue = "3000") int n
+            String postCode,
+            @RequestParam(defaultValue = "10000") int n
     ) throws IOException {
         SearchRequest searchRequest = new SearchRequest("berlin");
 
         BoolQueryBuilder query = new BoolQueryBuilder();
 
-        query.must(QueryBuilders.termQuery("postCode", postCode));
+        if (StringUtils.isEmpty(postCode)) {
+            postCode = "10245,10243,10247,10317,12435,10999,10997,10365";
+        }
+        query.must(QueryBuilders.termsQuery("postCode", parseInts(postCode)));
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
         sourceBuilder.size(n);
 
@@ -68,17 +71,17 @@ public class RestMainController {
         for (SearchHit hit : hits) {
             Map<String, Object> src = hit.getSourceAsMap();
 //            System.out.println(src);
-            Map<String,String> location = (Map) src.get("location");
-            Map<String,Integer> values = (Map)src.get("values");
+            Map<String, String> location = (Map) src.get("location");
+            Map<String, Integer> values = (Map) src.get("values");
 
             result.add(new DataPoint1(
                     Double.parseDouble(location.get("lat")),
                     Double.parseDouble(location.get("lon")),
-                    values.get("shops"),
-                    values.get("transport"),
-                    values.get("food"),
-                    values.get("sport"),
-                    values.get("parking")));
+                    getMapIntValue(values, "shops"),
+                    getMapIntValue(values, "transport"),
+                    getMapIntValue(values, "food"),
+                    getMapIntValue(values, "sport"),
+                    getMapIntValue(values, "parking")));
         }
         return result;
     }
@@ -224,6 +227,27 @@ public class RestMainController {
             res.add(Short.parseShort(part));
         }
         return res;
+    }
+
+    /**
+     * "1,2,3" -> [1,2,3]
+     */
+    private Set<Integer> parseInts(String str) {
+        String[] parts = str.split(",");
+        Set<Integer> res = new HashSet<>();
+        for (String part : parts) {
+            res.add(Integer.parseInt(part));
+        }
+        return res;
+    }
+
+    private int getMapIntValue(Map<String, Integer> m, String k) {
+        if (m == null)
+            return 0;
+        Integer v = m.get(k);
+        if (v == null)
+            return 0;
+        return v;
     }
 
     /**
