@@ -32,17 +32,6 @@
 		var map = L.map('map', {layers: [cities]}).setView([52.53, 13.381], 13);
 		L.esri.basemapLayer("Gray").addTo(map);
 
-		var overlays = {
-			"Parameter 1": cities,
-			"Parameter 2": cities,
-			"Parameter 3": cities,
-			"Parameter 4": cities,
-			"Parameter 5": cities,
-			"Parameter 6": cities,
-			"Parameter 7": cities,
-		};
-		L.control.layers({}, overlays).addTo(map);
-
         var addressPoints = [
                 [52.53, 13.381, 10], // lat, lng, intensity
                 [52.54, 13.382, 9],
@@ -56,7 +45,6 @@
 
         //изохрона
         var latlon = [52.53, 13.381];
-
 
          var markerA = L.marker((latlon),{ draggable: true }).addTo(map);
          var polygonLayer = r360.leafletPolygonLayer({ inverse: true }).addTo(map);
@@ -87,6 +75,7 @@
             "weight": 5,
             "opacity": 0.65
         };
+
         $.ajax({
           url: 'osm',
           data: {
@@ -97,15 +86,29 @@
             n: 1000
           },
           success: function(data){
+            var result = [];
             $.each(data, function() {
                     var poi = [this.lon,this.lat,this.score];
                     var rand = Math.random();
                     if (rand < 0.1){
-                          L.marker([this.lat,this.lon], {icon: greenIcon}).addTo(map);
+                          var marker = L.marker([this.lat,this.lon], {icon: greenIcon});
+                          result.push(marker);
+
                     }
 //                        result.push(poi);
 
                 });
+            cities=L.layerGroup(result).addTo(map);
+            var overlays = {
+			"Parameter 1": cities,
+			"Parameter 2": cities,
+			"Parameter 3": cities,
+			"Parameter 4": cities,
+			"Parameter 5": cities,
+			"Parameter 6": cities,
+			"Parameter 7": cities,
+		};
+		L.control.layers({}, overlays).addTo(map);
 //            result.push([52.64,13.291]);
 //            L.geoJSON(result, { style: noiseStyle}).addTo(map);
 
