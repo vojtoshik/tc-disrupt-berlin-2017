@@ -15,7 +15,7 @@
                     }
                 }
             },
-                { "term":  { "category": 105 }}]
+                { "term":  { "category": $CATEGORY$ }}]
         }
     }
 }
