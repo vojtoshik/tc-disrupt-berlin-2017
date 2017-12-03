@@ -27,9 +27,9 @@ $counter = 0;
 
 foreach ($houses as $item) {
 
-    if ($counter++ % 10 != 0) {
-        continue;
-    }
+//    if ($counter++ % 10 != 0) {
+//        continue;
+//    }
 
     $location = $item->_source->location;
     $id = $item->_source->id;
@@ -52,7 +52,7 @@ foreach ($houses as $item) {
     $updateScript = str_replace('$FOOD$', $food, $updateScript);
 
     echo 'https://hack.cmlteam.com/berlin/houses/' . $id . '/_update' . "\n";
-    echo $updateScript . "\n\n";
+//    echo $updateScript . "\n\n";
 
 
     $client->request('POST', 'https://hack.cmlteam.com/berlin/houses/' . $id . '/_update', ['json' => json_decode($updateScript)]);

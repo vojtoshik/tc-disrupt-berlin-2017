@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-ES=http://es.mydev.name
+#ES=http://es.mydev.name
+ES=https://hack.cmlteam.com
 
 curl -X DELETE "$ES/osm"
 echo
