@@ -15,6 +15,8 @@
     <script src="https://unpkg.com/esri-leaflet@2.1.1"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
 
+    <link rel="stylesheet" href="http://gregallensworth.github.io/L.Control.Credits/dist/leaflet-control-credits.css"/>
+    <script src="http://gregallensworth.github.io/L.Control.Credits/dist/leaflet-control-credits.js"></script>
     <style>
       html, body, #map {
         margin:0; padding:0;  width : 100%; height : 100%;
@@ -23,49 +25,41 @@
   </head>
   <body>
     <div style="background-color: #fff; z-index: 1000; position: fixed; top: 10px; right: 10px;
-font-family: sans-serif">
+#font-family: sans-serif">
       <label><input name="param" id="param1" type="checkbox">Param 1</label>
       <label><input name="param" id="param2" type="checkbox">Param 2</label>
       <label><input name="param" id="param3" type="checkbox">Param 3</label>
     </div>
     <div id="map"></div>
+    <div id="logo" style="position: absolute; bottom: 0; left: 0;z-index: 1000">
+        <img src="Where_Berlin_Map_Logo.png">
+    </div>
     <script>
 		var greenIcon = L.icon({
 			iconUrl: 'https://cdn4.iconfinder.com/data/icons/checkout-icons/32x32/house.png',
 		});
 		var cities = L.layerGroup();
 
-		var map = L.map('map', {layers: [cities]}).setView([52.53, 13.381], 13);
+		var map = L.map('map', {autoZIndex:false,sortLayers:true}).setView([52.53, 13.381], 13);
 		L.esri.basemapLayer("Gray").addTo(map);
 
-        var addressPoints = [
-                [52.53, 13.381, 10], // lat, lng, intensity
-                [52.54, 13.382, 9],
-                [52.55, 13.383, 9],
-                [52.56, 13.384, 9],
-                [52.57, 13.385, 9],
-                [52.58, 13.386, 9],
-                [52.59, 13.387, 9],
-                [52.60, 13.388, 8.5]];
-//        var heat = L.heatLayer(addressPoints,{radius: 12}).addTo(map);
-
         //изохрона
-        var latlon = [52.53, 13.381];
-
-         var markerA = L.marker((latlon),{ draggable: true }).addTo(map);
+         var markerA = L.marker([52.53, 13.381],{ draggable: true }).addTo(map);
          var polygonLayer = r360.leafletPolygonLayer({ inverse: true }).addTo(map);
          polygonLayer.setColors([{
               'time': 600,
-              'opacity' : 0.5
-            }, {
-              'time': 1200,
-               'opacity' : 0.2
-            }, ]);
+              'opacity' : 0.9
+            },
+//            {
+//              'time': 1200,
+//               'opacity' : 0.7
+//            },
+            ]);
          var showPolygons = function(rezoom) {
              var travelOptions = r360.travelOptions();
                 travelOptions.setServiceKey('3WQ8V9LAR8PIAE6T5LRZMBT');
                 travelOptions.addSource(markerA);
-                travelOptions.setTravelTimes([600, 1200]);
+                travelOptions.setTravelTimes([600]);
                 travelOptions.setTravelType('transit');
                 travelOptions.setServiceUrl('https://service.route360.net/germany/');
 
@@ -101,56 +95,74 @@ font-family: sans-serif">
                           result.push(marker);
 
                     }
-//                        result.push(poi);
-
                 });
-            cities=L.layerGroup(result).addTo(map);
-            var overlays = {
-			"Parameter 1": cities,
-			"Parameter 2": cities,
-			"Parameter 3": cities,
-			"Parameter 4": cities,
-			"Parameter 5": cities,
-			"Parameter 6": cities,
-			"Parameter 7": cities,
-		};
-		L.control.layers({}, overlays).addTo(map);
-//            result.push([52.64,13.291]);
-//            L.geoJSON(result, { style: noiseStyle}).addTo(map);
-
+                cities=L.layerGroup(result).addTo(map);
+                    var overlays = {
+                    "Parameter 1": cities,
+                    "Parameter 2": cities,
+                    "Parameter 3": cities,
+                    "Parameter 4": cities,
+                    "Parameter 5": cities,
+                    "Parameter 6": cities,
+                    "Parameter 7": cities,
+                };
+                L.control.layers({}, overlays).addTo(map);
           },
           dataType: 'json'
         });
 
         $.ajax({
-          url: 'osm_grid',
+          url: 'berlin',
           data: {
-            category:'26,27,28',
-            precision: 9,
+//            category:'26,27,28',
+//            precision: 9,
           },
           success: function(data){
             var resultHeat = [];
             var result = [];
             var max = 0;
             $.each(data, function() {
-                    var poi = [this.lat,this.lon,this.count];
+                    var poi = [this.lat,this.lon,(this.transport>200)?200:this.transport];
                     resultHeat.push(poi);
-                    if (this.count > max){
-                      max=this.count;
+                    if (this.shops > max){
+                      max=this.shops;
                     }
                 });
             $.each(resultHeat, function() {
-              this[2]/=max*2;
+              this[2]/=200;
             });
-
-
-            var heat = L.heatLayer(resultHeat,{radius: 50,gradient : {0.1: 'blue', 0.25: 'blue', 0.5: 'blue'},minOpacity:0.1}).addTo(map);
-            console.log(resultHeat.length);
-            console.log(max);
-
+            var heat = L.heatLayer(resultHeat,{radius: 10,gradient : {0.1: 'blue', 0.25: 'blue', 0.5: 'blue'},minOpacity:0.1}).addTo(map);
+//            polygonLayer.bringToFront();
           },
           dataType: 'json'
         });
+
+        $.ajax({
+          url: 'berlin',
+          data: {
+//            category:'26,27,28',
+//            precision: 9,
+          },
+          success: function(data){
+            var resultHeat = [];
+            var result = [];
+            var max = 0;
+            $.each(data, function() {
+                    var poi = [this.lat,this.lon,(this.transport>200)?200:this.transport];
+                    resultHeat.push(poi);
+                    if (this.shops > max){
+                      max=this.shops;
+                    }
+                });
+            $.each(resultHeat, function() {
+              this[2]/=200;
+            });
+            var heat = L.heatLayer(resultHeat,{radius: 10,gradient : {0.1: 'blue', 0.25: 'blue', 0.5: 'blue'},minOpacity:0.1}).addTo(map);
+//            polygonLayer.bringToFront();
+          },
+          dataType: 'json'
+        });
+
 
     </script>
   </body>
