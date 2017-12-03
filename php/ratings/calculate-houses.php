@@ -23,8 +23,14 @@ $hits = json_decode($res->getBody())->hits;
 echo "Total houses: " . $hits->total . "\n";
 
 $houses = $hits->hits;
+$counter = 0;
 
 foreach ($houses as $item) {
+
+    if ($counter++ % 10 != 0) {
+        continue;
+    }
+
     $location = $item->_source->location;
     $id = $item->_source->id;
 
