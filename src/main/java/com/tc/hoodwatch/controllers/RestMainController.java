@@ -41,12 +41,6 @@ public class RestMainController {
         this.highLevelClient = highLevelClient;
     }
 
-    @RequestMapping(value = "/endpoint", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    @ResponseBody
-    public String endpoint() {
-        return "Yo";
-    }
-
     @ResponseBody
     @RequestMapping(value = "/berlin", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public List<DataPoint1> getBerlin(
