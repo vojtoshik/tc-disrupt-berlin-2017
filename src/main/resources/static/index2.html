@@ -197,7 +197,7 @@
 						heat.push([
 							this.lat,
 							this.lon,
-							(this.food>200)?1:this.food
+							(this.food>200)?1:this.food/200
 						]);
 					});
 					changeHeatmap(heat);
