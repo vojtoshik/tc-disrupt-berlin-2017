@@ -52,7 +52,7 @@
                 [52.58, 13.386, 9],
                 [52.59, 13.387, 9],
                 [52.60, 13.388, 8.5]];
-        var heat = L.heatLayer(addressPoints,{radius: 12}).addTo(map);
+//        var heat = L.heatLayer(addressPoints,{radius: 12}).addTo(map);
 
         //изохрона
         var latlon = [52.53, 13.381];
@@ -108,6 +108,36 @@
                 });
 //            result.push([52.64,13.291]);
 //            L.geoJSON(result, { style: noiseStyle}).addTo(map);
+
+          },
+          dataType: 'json'
+        });
+
+        $.ajax({
+          url: 'osm_grid',
+          data: {
+            category:'26,27,28',
+            precision: 6,
+          },
+          success: function(data){
+            var resultHeat = [];
+            var result = [];
+            var max = 0;
+            $.each(data, function() {
+                    var poi = [this.lat,this.lon,this.count];
+                    resultHeat.push(poi);
+                    if (this.count > max){
+                      max=this.count;
+                    }
+                });
+            $.each(resultHeat, function() {
+              this[2]/=max;
+            });
+
+
+            var heat = L.heatLayer(resultHeat,{radius: 50,blur:1,gradient : {0.1: 'blue', 0.25: 'blue', 0.5: 'blue'},minOpacity:0.1}).addTo(map);
+            console.log(resultHeat.length);
+            console.log(max);
 
           },
           dataType: 'json'
