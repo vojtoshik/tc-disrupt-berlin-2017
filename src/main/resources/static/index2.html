@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset=utf-8 />
+	<title>Switching basemaps</title>
+	<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+	<!-- Load Leaflet from CDN -->
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
+		  integrity="sha512-M2wvCLH6DSRazYeZRIm1JnYyh22purTM+FDB5CsyxtQJYeKq83arPe5wgbNmcFXGqiSH2XR8dT/fJISVA1r/zQ=="
+		  crossorigin=""/>
+	<script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"
+			integrity="sha512-lInM/apFSqyy1o6s89K4iQUKg6ppXEgsVxT35HbzUupEVRh2Eu9Wdl4tHj7dZO0s1uvplcYGmt3498TtHq+log=="
+			crossorigin=""></script>
+
+
+	<!-- Load Esri Leaflet from CDN -->
+	<script src="https://unpkg.com/esri-leaflet@2.1.1/dist/esri-leaflet.js"
+			integrity="sha512-ECQqaYZke9cSdqlFG08zSkudgrdF6I1d8ViSa7I3VIszJyVqw4ng1G8sehEXlumdMnFYfzY0tMgdQa4WCs9IUw=="
+			crossorigin=""></script>
+
+
+	<!-- Include Leaflet.heat via rawgit.com
+	in production you'd be better off hosting this library yourself -->
+
+	<script src="https://rawgit.com/Leaflet/Leaflet.heat/gh-pages/dist/leaflet-heat.js"></script>
+
+	<!-- Load Heatmap Feature Layer from CDN -->
+	<script src="https://unpkg.com/esri-leaflet-heatmap@2.0.0"></script>
+
+
+	<style>
+		body {
+			margin:0; padding:0;
+			font: 400 11px system-ui;;
+		}
+		#map { position: absolute; top:0; bottom:0; right:0; left:0; }
+
+		#basemaps-wrapper {
+			position: absolute;
+			top: 10px;
+			right: 10px;
+			z-index: 400;
+			background: white;
+			padding: 10px;
+		}
+		#basemaps {
+			margin-bottom: 5px;
+		}
+	</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div id="basemaps-wrapper" class="leaflet-bar">
+	<select name="basemaps" id="basemaps" onChange="changeBasemap(basemaps)">
+		<option value="Topographic">Topographic</option>
+		<option value="Streets">Streets</option>
+		<option value="NationalGeographic">National Geographic</option>
+		<option value="Oceans">Oceans</option>
+		<option value="Gray" selected>Gray</option>
+		<option value="DarkGray">Dark Gray</option>
+		<option value="Imagery">Imagery</option>
+		<option value="ShadedRelief">Shaded Relief</option>
+	</select><br/>
+	<label><input name="param" id="param1" type="checkbox">Param 1</label><br/>
+	<label><input name="param" id="param2" type="checkbox">Param 2</label><br/>
+	<label><input name="param" id="param3" type="checkbox">Param 3</label>
+</div>
+
+<script>
+	var map = L.map('map').setView([52.516667, 13.388889], 13);
+	var layer = L.esri.basemapLayer('Gray').addTo(map);
+
+	// new constructor syntax at 2.0.0
+	var heatLayer = L.esri.Heat.featureLayer({
+		url: 'https://services.arcgis.com/rOo16HdIMeOBI4Mb/ArcGIS/rest/services/Graffiti_Reports/FeatureServer/0',
+		radius: 12
+	}).addTo(map);
+
+	
+	var layerLabels;
+
+	function setBasemap(basemap) {
+		if (layer) {
+			map.removeLayer(layer);
+		}
+
+		layer = L.esri.basemapLayer(basemap);
+
+		map.addLayer(layer);
+
+		if (layerLabels) {
+			map.removeLayer(layerLabels);
+		}
+
+		if (basemap === 'ShadedRelief'
+			|| basemap === 'Oceans'
+			|| basemap === 'Gray'
+			|| basemap === 'DarkGray'
+			|| basemap === 'Imagery'
+			|| basemap === 'Terrain'
+		) {
+			layerLabels = L.esri.basemapLayer(basemap + 'Labels');
+			map.addLayer(layerLabels);
+		}
+	}
+
+	function changeBasemap(basemaps){
+		var basemap = basemaps.value;
+		setBasemap(basemap);
+	}
+
+	function setHeatmap(heatmap) {
+		if(heatLayer) {
+			map.removeLayer(heatLayer);
+		}
+
+		
+	}
+</script>
+
+</body>
+</html>
