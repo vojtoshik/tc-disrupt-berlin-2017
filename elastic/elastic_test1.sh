@@ -3,6 +3,33 @@
 #ES=http://es.mydev.name
 ES=https://hack.cmlteam.com
 
+curl -s -X GET "$ES/parkings/_search?pretty" -d'
+{
+"sort": [
+        { "_uid":   { "order": "asc" }}
+        ],
+  "query":{
+    "bool":{
+      "must":
+      {
+        "match_all":{}
+
+      },
+      "filter": {
+        "geo_distance":{
+          "distance":"300m",
+          "location":{
+            "lat":52.507793,
+            "lon":13.467648
+          }
+        }
+      }
+    }
+  }
+}'
+
+exit
+
 curl -s -X GET "$ES/berlin/_search?pretty" -d'
 {
     "from" : 0,
