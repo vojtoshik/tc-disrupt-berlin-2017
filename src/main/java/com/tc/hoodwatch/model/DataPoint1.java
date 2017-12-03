@@ -8,14 +8,16 @@ public class DataPoint1 {
     private long transport;
     private long food;
     private long sport;
+    private long parking;
 
-    public DataPoint1(double lat, double lon, long shops, long transport, long food, long sport) {
+    public DataPoint1(double lat, double lon, long shops, long transport, long food, long sport, long parking) {
         this.lat = lat;
         this.lon = lon;
         this.shops = shops;
         this.transport = transport;
         this.food = food;
         this.sport = sport;
+        this.parking = parking;
     }
 
     public double getLat() {
@@ -40,5 +42,9 @@ public class DataPoint1 {
 
     public long getSport() {
         return sport;
+    }
+
+    public long getParking() {
+        return parking;
     }
 }

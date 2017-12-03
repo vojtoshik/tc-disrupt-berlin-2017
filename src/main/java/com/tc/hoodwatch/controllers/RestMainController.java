@@ -83,8 +83,8 @@ public class RestMainController {
                     values.get("shops"),
                     values.get("transport"),
                     values.get("food"),
-                    values.get("sport")
-            ));
+                    values.get("sport"),
+                    values.get("parking")));
         }
         return result;
     }

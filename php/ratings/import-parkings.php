@@ -29,11 +29,11 @@ while ($record = fgetcsv($f)) {
     if ($counter > 2000) {
         $counter = 0;
         file_put_contents("to_send.txt", $content);
-        passthru('curl -X POST https://hack.cmlteam.com/_bulk --data-binary "@to_send.txt"');
+        passthru('curl -s -X POST https://hack.cmlteam.com/_bulk --data-binary "@to_send.txt" 1>/dev/null');
         echo "Batch $batchCounter done...\n";
         $batchCounter++;
     }
 }
 
 file_put_contents("to_send.txt", $content);
-passthru('curl -X POST https://hack.cmlteam.com/_bulk --data-binary "@to_send.txt"');
+passthru('curl -s -X POST https://hack.cmlteam.com/_bulk --data-binary "@to_send.txt" 1>/dev/null');
