@@ -1,0 +1,21 @@
+{
+    "query":{
+        "bool":{
+            "must":
+            {
+                "match_all":{}
+
+            },
+            "filter": [{
+                "geo_distance":{
+                    "distance":"500m",
+                    "location":{
+                        "lat":0,
+                        "lon":0
+                    }
+                }
+            },
+                { "term":  { "category": 105 }}]
+        }
+    }
+}

@@ -1,0 +1,14 @@
+{
+  "script": {
+    "lang": "painless",
+    "source": "ctx._source.values = params.values",
+    "params": {
+      "values": {
+        "shops": $SHOPS$,
+        "transport": $TRANS$,
+        "food": $FOOD$,
+        "sport": $SPORT$
+      }
+    }
+  }
+}

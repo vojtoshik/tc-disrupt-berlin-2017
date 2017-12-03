@@ -1,0 +1,7 @@
+{
+    "name": "hackathon/importers",
+    "description": "",
+    "require": {
+        "guzzlehttp/guzzle": "^6.2"
+    }
+}
