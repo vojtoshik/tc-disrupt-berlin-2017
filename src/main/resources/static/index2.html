@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset=utf-8 />
-	<title>Switching basemaps</title>
-	<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+	<meta charset=utf-8/>
+	<title>New Shit</title>
+	<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no'/>
 
 	<!-- Load Leaflet from CDN -->
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"
@@ -28,13 +28,23 @@
 	<!-- Load Heatmap Feature Layer from CDN -->
 	<script src="https://unpkg.com/esri-leaflet-heatmap@2.0.0"></script>
 
+	<!-- jQuery 2.1.3 -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 
 	<style>
 		body {
-			margin:0; padding:0;
+			margin: 0;
+			padding: 0;
 			font: 400 11px system-ui;;
 		}
-		#map { position: absolute; top:0; bottom:0; right:0; left:0; }
+
+		#map {
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			right: 0;
+			left: 0;
+		}
 
 		#basemaps-wrapper {
 			position: absolute;
@@ -44,6 +54,7 @@
 			background: white;
 			padding: 10px;
 		}
+
 		#basemaps {
 			margin-bottom: 5px;
 		}
@@ -64,26 +75,18 @@
 		<option value="Imagery">Imagery</option>
 		<option value="ShadedRelief">Shaded Relief</option>
 	</select><br/>
-	<label><input name="param" id="param1" type="checkbox">Param 1</label><br/>
-	<label><input name="param" id="param2" type="checkbox">Param 2</label><br/>
-	<label><input name="param" id="param3" type="checkbox">Param 3</label>
+	<label><input name="category" id="category26" type="checkbox" value="26" onchange="updateHeatmap()">Category 26</label><br/>
+	<label><input name="category" id="category27" type="checkbox" value="27" onchange="updateHeatmap()">Category 27</label><br/>
+	<label><input name="category" id="category28" type="checkbox" value="28" onchange="updateHeatmap()">Category 28</label>
 </div>
 
 <script>
 	var map = L.map('map').setView([52.516667, 13.388889], 13);
 	var layer = L.esri.basemapLayer('Gray').addTo(map);
-
-	// new constructor syntax at 2.0.0
-	var heatLayer = L.esri.Heat.featureLayer({
-		url: 'https://services.arcgis.com/rOo16HdIMeOBI4Mb/ArcGIS/rest/services/Graffiti_Reports/FeatureServer/0',
-		radius: 12
-	}).addTo(map);
-
-	
 	var layerLabels;
 
 	function setBasemap(basemap) {
-		if (layer) {
+		if(layer) {
 			map.removeLayer(layer);
 		}
 
@@ -91,11 +94,11 @@
 
 		map.addLayer(layer);
 
-		if (layerLabels) {
+		if(layerLabels) {
 			map.removeLayer(layerLabels);
 		}
 
-		if (basemap === 'ShadedRelief'
+		if(basemap === 'ShadedRelief'
 			|| basemap === 'Oceans'
 			|| basemap === 'Gray'
 			|| basemap === 'DarkGray'
@@ -107,18 +110,60 @@
 		}
 	}
 
-	function changeBasemap(basemaps){
+	function changeBasemap(basemaps) {
 		var basemap = basemaps.value;
 		setBasemap(basemap);
 	}
 
-	function setHeatmap(heatmap) {
+	var heatLayer;
+
+	function updateHeatmap() {
+		const categories = $('input[type=checkbox]:checked').map(function() {
+				return this.value;
+		}).get().join(',');
+		console.log("categories selected: " + categories);
+		if(categories) {
+			$.ajax({
+				url: 'osm_grid',
+				data: {
+					category: categories,
+					precision: 9
+				},
+				dataType: 'json',
+				success: function(data) {
+					const heat = [];
+					$.each(data, function() {
+						heat.push([
+							this.lat,
+							this.lon,
+							this.count
+						]);
+					});
+					changeHeatmap(heat);
+				}
+			});
+		}
+		else {
+			changeHeatmap([]);
+		}
+	}
+
+	function changeHeatmap(heat) {
 		if(heatLayer) {
 			map.removeLayer(heatLayer);
 		}
 
-		
+		heatLayer = L.heatLayer(
+			heat,
+			{
+				radius: 50,
+				gradient: {0.1: 'green', 0.33: 'blue', 0.95: 'red'},
+				minOpacity: 0.05,
+				maxOpacity: 0.25
+			}
+		).addTo(map);
 	}
+
 </script>
 
 </body>
